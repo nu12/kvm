@@ -44,10 +44,10 @@ func (window *MainWindow) NewSplash() (*SplashWindow, error) {
 
 func (splash *SplashWindow) LoadAsync(table *widget.Table, counter *widget.Label) error {
 	go func() {
-		splash.parent.Vaults, _ = services.ListKeyVaults("")
+		splash.parent.VaultService = services.ListKeyVaults()
 		//table.Show()
 		table.Refresh()
-		counter.SetText(fmt.Sprintf("Showing %d out of %d key vaults.", len(splash.parent.Vaults), len(splash.parent.Vaults)))
+		counter.SetText(fmt.Sprintf("Showing %d out of %d key vaults.", len(splash.parent.VaultService.Vaults), len(splash.parent.VaultService.Vaults)))
 		fyne.Do(func() {
 			splash.this.Close() // ← Hide, not Close (see note below)
 
