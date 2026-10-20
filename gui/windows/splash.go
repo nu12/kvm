@@ -9,7 +9,6 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/go-gl/glfw/v3.4/glfw"
-	"github.com/nu12/kvm/services"
 )
 
 type SplashWindow struct {
@@ -44,7 +43,7 @@ func (window *MainWindow) NewSplash() (*SplashWindow, error) {
 
 func (splash *SplashWindow) LoadAsync(table *widget.Table, counter *widget.Label) error {
 	go func() {
-		splash.parent.VaultService = services.ListKeyVaults()
+		splash.parent.VaultService = splash.parent.VaultService.ListKeyVaults()
 		//table.Show()
 		table.Refresh()
 		counter.SetText(fmt.Sprintf("Showing %d out of %d key vaults.", len(splash.parent.VaultService.Vaults), len(splash.parent.VaultService.Vaults)))

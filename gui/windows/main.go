@@ -37,8 +37,11 @@ func (c *DoubleTapCell) DoubleTapped(_ *fyne.PointEvent) {
 }
 
 type MainWindow struct {
-	Logo         fyne.Resource
-	VaultService *services.KeyVaultService
+	CredentialFactory   func() (services.TokenCredential, error)
+	SubscriptionFactory func() (services.SubscriptionListPager, error)
+	VaultFactory        func(string) (services.VaultBySubscriptionPager, error)
+	Logo                fyne.Resource
+	VaultService        *services.KeyVaultService
 
 	app        fyne.App
 	this       fyne.Window
@@ -56,7 +59,11 @@ func (window *MainWindow) Init() *MainWindow {
 	window.this = window.app.NewWindow("Key Vault Manager")
 	window.this.Resize(fyne.Size{Width: 600, Height: 400})
 
-	window.VaultService = &services.KeyVaultService{}
+	window.VaultService = &services.KeyVaultService{
+		CredentialFactory:   window.CredentialFactory,
+		SubscriptionFactory: window.SubscriptionFactory,
+		VaultFactory:        window.VaultFactory,
+	}
 	return window
 }
 
