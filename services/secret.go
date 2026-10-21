@@ -6,10 +6,11 @@ import (
 	"log"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
+	"github.com/nu12/kvm/factory"
 )
 
-func (kv *KeyVaultService) ListSecrets(vaultName string) ([]*azsecrets.SecretProperties, error) {
-	cred, _ := kv.CredentialFactory()
+func ListSecrets(vaultName string) ([]*azsecrets.SecretProperties, error) {
+	cred, _ := factory.GetAccountClient()
 	client, err := azsecrets.NewClient(fmt.Sprintf("https://%s.vault.azure.net/", vaultName), cred, nil)
 	if err != nil {
 		log.Printf("failed to create client: %v", err)
@@ -35,8 +36,8 @@ func (kv *KeyVaultService) ListSecrets(vaultName string) ([]*azsecrets.SecretPro
 	return secrets, nil
 }
 
-func (kv *KeyVaultService) GetSecret(vaultName string, secretName string, secretVersion string) (string, error) {
-	cred, _ := kv.CredentialFactory()
+func GetSecret(vaultName string, secretName string, secretVersion string) (string, error) {
+	cred, _ := factory.GetAccountClient()
 	client, err := azsecrets.NewClient(fmt.Sprintf("https://%s.vault.azure.net/", vaultName), cred, nil)
 	if err != nil {
 		log.Printf("failed to create client: %v", err)

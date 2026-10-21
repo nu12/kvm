@@ -4,22 +4,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	armsubscriptions "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
+	"github.com/nu12/kvm/factory"
 )
 
-type SubscriptionListPager interface {
-	NewListPager(options *armsubscriptions.ClientListOptions) *runtime.Pager[armsubscriptions.ClientListResponse]
-}
-
-type SubscriptionFactory func() (SubscriptionListPager, error)
-
-func GetSubscriptionsFactory(factory SubscriptionFactory) (SubscriptionListPager, error) {
-	log.Printf("Getting subscriptions information")
-	return factory()
-}
-
-func GetAzureSubscriptions(client SubscriptionListPager) ([]*armsubscriptions.Subscription, error) {
+func GetAzureSubscriptions(client factory.SubscriptionClient) ([]*armsubscriptions.Subscription, error) {
 
 	var subs []*armsubscriptions.Subscription
 	subPager := client.NewListPager(nil)

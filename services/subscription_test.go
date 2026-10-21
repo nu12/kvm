@@ -2,12 +2,12 @@ package services
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	armsubscriptions "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
+	"github.com/nu12/kvm/factory"
 )
 
 type mockPager struct {
@@ -47,32 +47,11 @@ func (m *mockPager) NewListPager(options *armsubscriptions.ClientListOptions) *r
 
 }
 
-func TestGetSubscriptionFactory_Success(t *testing.T) {
-	_, err := GetSubscriptionsFactory(func() (SubscriptionListPager, error) {
-		return &mockPager{}, nil
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
+func TestGetSubscriptions(t *testing.T) {
+	f := factory.GetInstance()
+	f.SubscriptionFactory = func() (factory.SubscriptionClient, error) { return &mockPager{}, nil }
 
-func TestGetSubscriptionFactory_Error(t *testing.T) {
-	wantErr := errors.New("auth failed")
-
-	_, err := GetSubscriptionsFactory(func() (SubscriptionListPager, error) {
-		return nil, wantErr
-	})
-
-	if !errors.Is(err, wantErr) {
-		t.Fatalf("expected %v, got %v", wantErr, err)
-	}
-}
-
-func TestGetSubscriptionsFactory(t *testing.T) {
-
-	client, err := GetSubscriptionsFactory(func() (SubscriptionListPager, error) {
-		return &mockPager{}, nil
-	})
+	client, err := factory.GetSubscriptionClient()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

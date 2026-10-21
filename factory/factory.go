@@ -1,4 +1,4 @@
-package services
+package factory
 
 import (
 	"context"
@@ -11,35 +11,36 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
 )
 
-type TokenCredential interface {
+type AccountClient interface {
 	GetToken(ctx context.Context, opts policy.TokenRequestOptions) (azcore.AccessToken, error)
 }
 
-type CredentialFactory func() (TokenCredential, error)
-
-type SubscriptionListPager interface {
+type SubscriptionClient interface {
 	NewListPager(options *armsubscriptions.ClientListOptions) *runtime.Pager[armsubscriptions.ClientListResponse]
 }
 
-type SubscriptionFactory func() (SubscriptionListPager, error)
-
-type VaultBySubscriptionPager interface {
+type VaultClient interface {
 	NewListBySubscriptionPager(options *armkeyvault.VaultsClientListBySubscriptionOptions) *runtime.Pager[armkeyvault.VaultsClientListBySubscriptionResponse]
 }
 
-type VaultFactory func(string) (VaultBySubscriptionPager, error)
-
 type Factory struct {
-	CredentialFactory   func() (TokenCredential, error)
-	SubscriptionFactory func() (SubscriptionListPager, error)
-	VaultFactory        func(string) (VaultBySubscriptionPager, error)
+	CredentialFactory   func() (AccountClient, error)
+	SubscriptionFactory func() (SubscriptionClient, error)
+	VaultFactory        func(string) (VaultClient, error)
 }
 
 var instance *Factory
 var once sync.Once
 
-func AccountClient() (TokenCredential, error) {
+func GetAccountClient() (AccountClient, error) {
 	return GetInstance().CredentialFactory()
+}
+
+func GetSubscriptionClient() (SubscriptionClient, error) {
+	return GetInstance().SubscriptionFactory()
+}
+func GetVaultClient(sub string) (VaultClient, error) {
+	return GetInstance().VaultFactory(sub)
 }
 
 func GetInstance() *Factory {

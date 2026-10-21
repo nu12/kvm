@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
+	"github.com/nu12/kvm/services"
 
 	"golang.design/x/clipboard"
 )
@@ -42,7 +43,7 @@ func (c *SecretTapCell) DoubleTapped(_ *fyne.PointEvent) {
 	// your action here
 	log.Println(secretId)
 
-	v, _ := c.Window.parent.VaultService.GetSecret(c.VaultName, c.SecretName, "")
+	v, _ := services.GetSecret(c.VaultName, c.SecretName, "")
 	log.Println(v)
 
 	if err := clipboard.Init(); err != nil {
@@ -67,7 +68,7 @@ func (window *MainWindow) NewVaultWindow(vaultName string) {
 	vaultWindow.this.Show()
 
 	vaultWindow.Components.Table = widget.NewTableWithHeaders(
-		func() (rows int, cols int) { return len(window.VaultService.Vaults), 2 },
+		func() (rows int, cols int) { return len(window.Vaults), 2 },
 		func() fyne.CanvasObject { return newSecretTapCell() },
 		func(id widget.TableCellID, o fyne.CanvasObject) {
 			b := o.(*SecretTapCell)
@@ -88,7 +89,7 @@ func (window *MainWindow) NewVaultWindow(vaultName string) {
 		vaultWindow.Components.Table,
 	)
 	vaultWindow.this.SetContent(content)
-	secrets, _ = window.VaultService.ListSecrets(vaultName)
+	secrets, _ = services.ListSecrets(vaultName)
 	vaultWindow.Components.Table.Show()
 
 }

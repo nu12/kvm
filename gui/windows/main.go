@@ -7,8 +7,8 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
 	"github.com/nu12/kvm/gui/themes"
-	"github.com/nu12/kvm/services"
 )
 
 type DoubleTapCell struct {
@@ -37,11 +37,8 @@ func (c *DoubleTapCell) DoubleTapped(_ *fyne.PointEvent) {
 }
 
 type MainWindow struct {
-	CredentialFactory   func() (services.TokenCredential, error)
-	SubscriptionFactory func() (services.SubscriptionListPager, error)
-	VaultFactory        func(string) (services.VaultBySubscriptionPager, error)
-	Logo                fyne.Resource
-	VaultService        *services.KeyVaultService
+	Logo   fyne.Resource
+	Vaults []*armkeyvault.Vault
 
 	app        fyne.App
 	this       fyne.Window
@@ -59,11 +56,7 @@ func (window *MainWindow) Init() *MainWindow {
 	window.this = window.app.NewWindow("Key Vault Manager")
 	window.this.Resize(fyne.Size{Width: 600, Height: 400})
 
-	window.VaultService = &services.KeyVaultService{
-		CredentialFactory:   window.CredentialFactory,
-		SubscriptionFactory: window.SubscriptionFactory,
-		VaultFactory:        window.VaultFactory,
-	}
+	window.Vaults = []*armkeyvault.Vault{}
 	return window
 }
 
@@ -71,7 +64,7 @@ func (window *MainWindow) CreateComponents() *MainWindow {
 	window.Components.Search = container.NewBorder(nil, nil, nil, widget.NewButton("Filter", func() {}), widget.NewEntry())
 
 	window.Components.Table = widget.NewTableWithHeaders(
-		func() (rows int, cols int) { return len(window.VaultService.Vaults), 2 },
+		func() (rows int, cols int) { return len(window.Vaults), 2 },
 		func() fyne.CanvasObject { return newDoubleTapCell() },
 		func(id widget.TableCellID, o fyne.CanvasObject) {
 
@@ -80,9 +73,9 @@ func (window *MainWindow) CreateComponents() *MainWindow {
 			b.Window = window
 			switch id.Col {
 			case 0:
-				b.SetText(*window.VaultService.Vaults[id.Row].Name)
+				b.SetText(*window.Vaults[id.Row].Name)
 			case 1:
-				b.SetText(*window.VaultService.Vaults[id.Row].ID)
+				b.SetText(*window.Vaults[id.Row].ID)
 			}
 		},
 	)
@@ -101,7 +94,7 @@ func (window *MainWindow) CreateComponents() *MainWindow {
 
 	//table.Hide()
 
-	window.Components.Counter = widget.NewLabel(fmt.Sprintf("Showing %d out of %d key vaults.", len(window.VaultService.Vaults), len(window.VaultService.Vaults)))
+	window.Components.Counter = widget.NewLabel(fmt.Sprintf("Showing %d out of %d key vaults.", len(window.Vaults), len(window.Vaults)))
 
 	return window
 
