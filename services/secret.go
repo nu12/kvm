@@ -9,9 +9,9 @@ import (
 	"github.com/nu12/kvm/factory"
 )
 
-func ListSecrets(vaultName string) ([]*azsecrets.SecretProperties, error) {
-	cred, _ := factory.GetAccountClient()
-	client, err := azsecrets.NewClient(fmt.Sprintf("https://%s.vault.azure.net/", vaultName), cred, nil)
+func GetSecrets(vaultName string) ([]*azsecrets.SecretProperties, error) {
+
+	client, err := factory.GetSecretClient(vaultName)
 	if err != nil {
 		log.Printf("failed to create client: %v", err)
 		return []*azsecrets.SecretProperties{}, err
@@ -19,8 +19,6 @@ func ListSecrets(vaultName string) ([]*azsecrets.SecretProperties, error) {
 
 	secrets := []*azsecrets.SecretProperties{}
 
-	// List secrets
-	// pager := client.NewListSecretsPager(nil)
 	pager := client.NewListSecretPropertiesPager(nil)
 	for pager.More() {
 		page, err := pager.NextPage(context.Background())
@@ -37,8 +35,8 @@ func ListSecrets(vaultName string) ([]*azsecrets.SecretProperties, error) {
 }
 
 func GetSecret(vaultName string, secretName string, secretVersion string) (string, error) {
-	cred, _ := factory.GetAccountClient()
-	client, err := azsecrets.NewClient(fmt.Sprintf("https://%s.vault.azure.net/", vaultName), cred, nil)
+
+	client, err := factory.GetSecretClient(vaultName)
 	if err != nil {
 		log.Printf("failed to create client: %v", err)
 		return "", err

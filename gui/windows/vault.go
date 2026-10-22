@@ -89,7 +89,7 @@ func (window *MainWindow) NewVaultWindow(vaultName string) {
 		vaultWindow.Components.Table,
 	)
 	vaultWindow.this.SetContent(content)
-	secrets, _ = services.ListSecrets(vaultName)
+	secrets, _ = services.GetSecrets(vaultName)
 	vaultWindow.Components.Table.Show()
 
 }

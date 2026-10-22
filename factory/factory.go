@@ -9,6 +9,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 )
 
 type AccountClient interface {
@@ -23,10 +24,16 @@ type VaultClient interface {
 	NewListBySubscriptionPager(options *armkeyvault.VaultsClientListBySubscriptionOptions) *runtime.Pager[armkeyvault.VaultsClientListBySubscriptionResponse]
 }
 
+type SecretClient interface {
+	NewListSecretPropertiesPager(options *azsecrets.ListSecretPropertiesOptions) *runtime.Pager[azsecrets.ListSecretPropertiesResponse]
+	GetSecret(ctx context.Context, name string, version string, options *azsecrets.GetSecretOptions) (azsecrets.GetSecretResponse, error)
+}
+
 type Factory struct {
 	CredentialFactory   func() (AccountClient, error)
 	SubscriptionFactory func() (SubscriptionClient, error)
 	VaultFactory        func(string) (VaultClient, error)
+	SecretFactory       func(string) (SecretClient, error)
 }
 
 var instance *Factory
@@ -41,6 +48,9 @@ func GetSubscriptionClient() (SubscriptionClient, error) {
 }
 func GetVaultClient(sub string) (VaultClient, error) {
 	return GetInstance().VaultFactory(sub)
+}
+func GetSecretClient(vault string) (SecretClient, error) {
+	return GetInstance().SecretFactory(vault)
 }
 
 func GetInstance() *Factory {
