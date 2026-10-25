@@ -25,7 +25,7 @@ func main() {
 		return azsecrets.NewClient(fmt.Sprintf("https://%s.vault.azure.net/", vault), cred, nil)
 	}
 
-	w := windows.MainWindow{
+	w := windows.RootWindow{
 		Logo: resourceLogoPng,
 	}
 	w.Init().CreateComponents().SetContent().Run()

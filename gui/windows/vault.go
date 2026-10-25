@@ -8,15 +8,17 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
+	"github.com/nu12/kvm/gui/components"
 	"github.com/nu12/kvm/services"
 
 	"golang.design/x/clipboard"
 )
 
 type VaultWindow struct {
-	parent    *MainWindow
+	//parent    *RootWindow
 	this      fyne.Window
 	VaultName string
+	Secrets   []*azsecrets.SecretProperties
 
 	Components struct {
 		Search *fyne.Container
@@ -24,72 +26,58 @@ type VaultWindow struct {
 	}
 }
 
-type SecretTapCell struct {
-	widget.Label
-	CellID     widget.TableCellID
-	Window     *VaultWindow
-	VaultName  string
-	SecretName string
-}
-
-func newSecretTapCell() *SecretTapCell {
-	c := &SecretTapCell{}
-	c.ExtendBaseWidget(c)
-	return c
-}
-
-func (c *SecretTapCell) DoubleTapped(_ *fyne.PointEvent) {
-	secretId := c.Text
-	// your action here
-	log.Println(secretId)
-
-	v, _ := services.GetSecret(c.VaultName, c.SecretName, "")
-	log.Println(v)
-
-	if err := clipboard.Init(); err != nil {
-		log.Fatal(err)
-	}
-
-	// Copy text to clipboard
-	if _, err := clipboard.Write(context.Background(), clipboard.FmtText, []byte(v), clipboard.Loops(1)); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func (window *MainWindow) NewVaultWindow(vaultName string) {
+func NewVaultWindow(vaultName string) *VaultWindow {
 	vaultWindow := &VaultWindow{
-		parent:    window,
-		this:      window.app.NewWindow("Vault: " + vaultName),
+		Secrets:   []*azsecrets.SecretProperties{},
 		VaultName: vaultName,
+		this:      fyne.CurrentApp().NewWindow("Vault: " + vaultName),
 	}
-	secrets := []*azsecrets.SecretProperties{}
-	//w := window.app.NewWindow("Vault: " + vaultName)
 	vaultWindow.this.Resize(fyne.Size{Width: 600, Height: 400})
 	vaultWindow.this.Show()
 
-	vaultWindow.Components.Table = widget.NewTableWithHeaders(
-		func() (rows int, cols int) { return len(window.Vaults), 2 },
-		func() fyne.CanvasObject { return newSecretTapCell() },
+	return vaultWindow.createComponents().setContent().run()
+}
+
+func (window *VaultWindow) createComponents() *VaultWindow {
+	window.Components.Table = widget.NewTableWithHeaders(
+		func() (rows int, cols int) { return len(window.Secrets), 2 },
+		func() fyne.CanvasObject { return components.NewDoubleTapCell() },
 		func(id widget.TableCellID, o fyne.CanvasObject) {
-			b := o.(*SecretTapCell)
+			b := o.(*components.DoubleTapCell)
 			b.CellID = id
-			b.Window = vaultWindow
-			b.VaultName = vaultName
-			b.SecretName = secrets[id.Row].ID.Name()
-			b.SetText(secrets[id.Row].ID.Name())
+			b.DoubleTapFunc = func() {
+				v, _ := services.GetSecret(window.VaultName, window.Secrets[id.Row].ID.Name(), "")
+				if _, err := clipboard.Write(context.Background(), clipboard.FmtText, []byte(v), clipboard.Loops(1)); err != nil {
+					log.Fatal(err)
+				}
+				log.Println("Secret's value copied to clipboard")
+
+			}
+			b.SetText(window.Secrets[id.Row].ID.Name())
 		},
 	)
-	vaultWindow.Components.Table.Hide()
 
+	window.Components.Search = container.NewBorder(nil, nil, nil, widget.NewButton("Filter", func() {}), widget.NewEntry())
+
+	return window
+}
+
+func (window *VaultWindow) setContent() *VaultWindow {
 	content := container.NewBorder(
-		container.NewBorder(nil, nil, nil, widget.NewButton("Filter", func() {}), widget.NewEntry()),
+		window.Components.Search,
 		nil,
 		nil,
 		nil,
-		vaultWindow.Components.Table,
+		window.Components.Table,
 	)
-	vaultWindow.this.SetContent(content)
-	secrets, _ = services.GetSecrets(vaultName)
-	vaultWindow.Components.Table.Show()
+	window.this.SetContent(content)
 
+	return window
+}
+
+func (window *VaultWindow) run() *VaultWindow {
+	window.Secrets, _ = services.GetSecrets(window.VaultName)
+	window.Components.Table.Show()
+
+	return window
 }
