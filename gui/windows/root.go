@@ -8,10 +8,11 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
+	"github.com/nu12/kvm/gui/components"
 	"github.com/nu12/kvm/gui/themes"
 )
 
-type MainWindow struct {
+type RootWindow struct {
 	Logo   fyne.Resource
 	Vaults []*armkeyvault.Vault
 
@@ -24,7 +25,7 @@ type MainWindow struct {
 	}
 }
 
-func (window *MainWindow) Init() *MainWindow {
+func (window *RootWindow) Init() *RootWindow {
 	window.app = app.New()
 	window.app.Settings().SetTheme(&themes.TransparentTheme{})
 
@@ -35,15 +36,16 @@ func (window *MainWindow) Init() *MainWindow {
 	return window
 }
 
-func (window *MainWindow) CreateComponents() *MainWindow {
-	window.Components.Search = container.NewBorder(nil, nil, nil, widget.NewButton("C", func() {}), widget.NewEntry())
+func (window *RootWindow) CreateComponents() *RootWindow {
+	window.Components.Search = container.NewBorder(nil, nil, nil, widget.NewButton("Filter", func() {}), widget.NewEntry())
 
 	window.Components.Table = widget.NewTableWithHeaders(
 		func() (rows int, cols int) { return len(window.Vaults), 2 },
-		func() fyne.CanvasObject { return widget.NewLabel("") },
+		func() fyne.CanvasObject { return components.NewDoubleTapCell() },
 		func(id widget.TableCellID, o fyne.CanvasObject) {
-
-			b := o.(*widget.Label)
+			b := o.(*components.DoubleTapCell)
+			b.CellID = id
+			b.DoubleTapFunc = func() { NewVaultWindow(*window.Vaults[id.Row].Name) }
 			switch id.Col {
 			case 0:
 				b.SetText(*window.Vaults[id.Row].Name)
@@ -63,6 +65,8 @@ func (window *MainWindow) CreateComponents() *MainWindow {
 	}
 	window.Components.Table.ShowHeaderColumn = false
 	window.Components.Table.SetColumnWidth(0, 150)
+	window.Components.Table.SetColumnWidth(1, 150)
+
 	//table.Hide()
 
 	window.Components.Counter = widget.NewLabel(fmt.Sprintf("Showing %d out of %d key vaults.", len(window.Vaults), len(window.Vaults)))
@@ -70,7 +74,7 @@ func (window *MainWindow) CreateComponents() *MainWindow {
 	return window
 
 }
-func (window *MainWindow) SetContent() *MainWindow {
+func (window *RootWindow) SetContent() *RootWindow {
 	content := container.NewBorder(
 		window.Components.Search,
 		window.Components.Counter,
@@ -82,8 +86,8 @@ func (window *MainWindow) SetContent() *MainWindow {
 	window.this.SetContent(content)
 	return window
 }
-func (window *MainWindow) Run() *MainWindow {
-	splash, _ := window.NewSplash()
+func (window *RootWindow) Run() *RootWindow {
+	splash, _ := NewSplash(window)
 	splash.LoadAsync(window.Components.Table, window.Components.Counter)
 	window.app.Run() // blocks here, runs the event loop
 	return window

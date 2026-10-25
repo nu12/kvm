@@ -13,21 +13,21 @@ import (
 )
 
 type SplashWindow struct {
-	app    fyne.App
-	parent *MainWindow
+	parent *RootWindow
 	this   fyne.Window
 }
 
-func (window *MainWindow) NewSplash() (*SplashWindow, error) {
+// To do: remove reference to RootWindow
+func NewSplash(parent *RootWindow) (*SplashWindow, error) {
 	// 2. Enable transparent framebuffer via GLFW
 	if glfw.Init() == nil {
 		glfw.WindowHint(glfw.TransparentFramebuffer, glfw.True)
 	}
 
 	var splash fyne.Window
-	if drv, ok := window.app.Driver().(desktop.Driver); ok {
+	if drv, ok := fyne.CurrentApp().Driver().(desktop.Driver); ok {
 		splash = drv.CreateSplashWindow()
-		img := canvas.NewImageFromResource(window.Logo)
+		img := canvas.NewImageFromResource(parent.Logo)
 		img.FillMode = canvas.ImageFillOriginal
 		splash.SetContent(img)
 		splash.Show()
@@ -36,22 +36,21 @@ func (window *MainWindow) NewSplash() (*SplashWindow, error) {
 		}
 	}
 	return &SplashWindow{
-		app:    window.app,
-		parent: window,
+		parent: parent,
 		this:   splash,
 	}, nil
 }
 
 func (splash *SplashWindow) LoadAsync(table *widget.Table, counter *widget.Label) error {
 	go func() {
-		splash.parent.Vaults, _ = services.ListKeyVaults("")
+		splash.parent.Vaults, _ = services.GetKeyVaults()
 		//table.Show()
 		table.Refresh()
 		counter.SetText(fmt.Sprintf("Showing %d out of %d key vaults.", len(splash.parent.Vaults), len(splash.parent.Vaults)))
 		fyne.Do(func() {
 			splash.this.Close() // ← Hide, not Close (see note below)
 
-			splash.app.Settings().SetTheme(theme.DefaultTheme())
+			fyne.CurrentApp().Settings().SetTheme(theme.DefaultTheme())
 
 			splash.parent.this.Show() // ← Show, NOT ShowAndRun
 		})

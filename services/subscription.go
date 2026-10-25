@@ -4,28 +4,20 @@ import (
 	"context"
 	"log"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	armsubscriptions "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
+	"github.com/nu12/kvm/factory"
 )
 
-func GetAzureSubscriptions(cred *azidentity.DefaultAzureCredential, ctx context.Context) ([]*armsubscriptions.Subscription, error) {
-	log.Printf("Getting subscriptions information")
+func GetAzureSubscriptions(client factory.SubscriptionClient) ([]*armsubscriptions.Subscription, error) {
+
 	var subs []*armsubscriptions.Subscription
-
-	subscriptionsClient, err := armsubscriptions.NewClient(cred, nil)
-	if err != nil {
-		log.Printf("failed to get subscriptions client: %v", err)
-		return []*armsubscriptions.Subscription{}, err
-	}
-
-	subPager := subscriptionsClient.NewListPager(nil)
+	subPager := client.NewListPager(nil)
 	for subPager.More() {
-		subPage, err := subPager.NextPage(ctx)
+		subPage, err := subPager.NextPage(context.Background())
 		if err != nil {
 			log.Printf("failed to advance page: %v", err)
 			return []*armsubscriptions.Subscription{}, err
 		}
-
 		for _, sub := range subPage.Value {
 			subs = append(subs, sub)
 		}

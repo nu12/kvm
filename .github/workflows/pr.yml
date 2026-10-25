@@ -8,12 +8,17 @@ on:
 
 jobs:
   ci:
-    name: CI
-    uses: nu12/templates/.github/workflows/go-pr.v1.yml@main
-    with:
-      run-lint: true
-      run-test: true
-      run-docker-build: false
-      go-version: '1.26.3'
-      docker-tag: 'latest'
-    secrets: inherit
+    runs-on: ubuntu-latest
+    name: 'Pull Request (Go)'
+    steps:
+    - run: |
+        sudo apt update && sudo apt install libwayland-dev libxkbcommon-dev libxcursor-dev libx11-dev libxrandr-dev libxinerama-dev libxi-dev libegl1-mesa-dev libxxf86vm-dev -y
+    # - name: Lint
+    #   uses: nu12/templates/actions/lint/go/v1@main
+    #   with:
+    #     go-version: '1.26.3'
+    - name: Test
+      uses: nu12/templates/actions/test/go/v1@main
+      with:
+        go-version: '1.26.3'
+      
