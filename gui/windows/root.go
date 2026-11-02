@@ -2,6 +2,7 @@ package windows
 
 import (
 	"fmt"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -30,7 +31,7 @@ func (window *RootWindow) Init() *RootWindow {
 	window.app.Settings().SetTheme(&themes.TransparentTheme{})
 
 	window.this = window.app.NewWindow("Key Vault Manager")
-	window.this.Resize(fyne.Size{Width: 600, Height: 400})
+	window.this.Resize(fyne.Size{Width: 800, Height: 400})
 
 	window.Vaults = []*armkeyvault.Vault{}
 	return window
@@ -40,17 +41,23 @@ func (window *RootWindow) CreateComponents() *RootWindow {
 	window.Components.Search = container.NewBorder(nil, nil, nil, widget.NewButton("Filter", func() {}), widget.NewEntry())
 
 	window.Components.Table = widget.NewTableWithHeaders(
-		func() (rows int, cols int) { return len(window.Vaults), 2 },
+		func() (rows int, cols int) { return len(window.Vaults), 4 },
 		func() fyne.CanvasObject { return components.NewDoubleTapCell() },
 		func(id widget.TableCellID, o fyne.CanvasObject) {
 			b := o.(*components.DoubleTapCell)
 			b.CellID = id
 			b.DoubleTapFunc = func() { NewVaultWindow(*window.Vaults[id.Row].Name) }
+
+			parts := strings.Split(*window.Vaults[id.Row].ID, "/")
 			switch id.Col {
 			case 0:
 				b.SetText(*window.Vaults[id.Row].Name)
 			case 1:
-				b.SetText(*window.Vaults[id.Row].ID)
+				b.SetText(parts[4])
+			case 2:
+				b.SetText(parts[2])
+			case 3:
+				b.SetText(*window.Vaults[id.Row].Location)
 			}
 		},
 	)
@@ -60,12 +67,18 @@ func (window *RootWindow) CreateComponents() *RootWindow {
 		case 0:
 			b.SetText("Name")
 		case 1:
-			b.SetText("ID")
+			b.SetText("RG")
+		case 2:
+			b.SetText("Subscription")
+		case 3:
+			b.SetText("Location")
 		}
 	}
 	window.Components.Table.ShowHeaderColumn = false
 	window.Components.Table.SetColumnWidth(0, 150)
 	window.Components.Table.SetColumnWidth(1, 150)
+	window.Components.Table.SetColumnWidth(2, 300)
+	window.Components.Table.SetColumnWidth(3, 150)
 
 	//table.Hide()
 
