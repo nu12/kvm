@@ -17,15 +17,13 @@ type SplashWindow struct {
 	this   fyne.Window
 }
 
-// To do: remove reference to RootWindow
 func NewSplash(parent *RootWindow) (*SplashWindow, error) {
-	// 2. Enable transparent framebuffer via GLFW
-	if glfw.Init() == nil {
-		glfw.WindowHint(glfw.TransparentFramebuffer, glfw.True)
-	}
 
 	var splash fyne.Window
 	if drv, ok := fyne.CurrentApp().Driver().(desktop.Driver); ok {
+		if glfw.Init() == nil {
+			glfw.WindowHint(glfw.TransparentFramebuffer, glfw.True)
+		}
 		splash = drv.CreateSplashWindow()
 		img := canvas.NewImageFromResource(parent.Logo)
 		img.FillMode = canvas.ImageFillOriginal
