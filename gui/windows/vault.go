@@ -2,7 +2,6 @@ package windows
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"fyne.io/fyne/v2"
@@ -53,11 +52,13 @@ func initVaultWindow(vaultName string) *VaultWindow {
 }
 
 func (window *VaultWindow) createComponents() *VaultWindow {
-	window.Components.SecretsTab.Table = widget.NewTableWithHeaders(
-		func() (rows int, cols int) { return len(window.Secrets), 5 },
-		func() fyne.CanvasObject { return components.NewDoubleTapCell() },
-		func(id widget.TableCellID, o fyne.CanvasObject) {
-			b := o.(*components.DoubleTapCell)
+	window.Components.SecretsTab.Table = components.NewTable(components.TableConfig{
+		RowCount:    func() int { return len(window.Secrets) },
+		Headers:     []string{"Name", "Creation date", "Expiration date", "Content-type", "Enabled"},
+		ColumnWidth: []float32{250, 250, 250, 100, 100},
+		NewCell:     func() fyne.CanvasObject { return components.NewSecretCell() },
+		Func: func(id widget.TableCellID, o fyne.CanvasObject) {
+			b := o.(*components.SecretCell)
 			b.CellID = id
 			b.DoubleTapFunc = func() {
 				v, _ := services.GetSecret(window.VaultName, window.Secrets[id.Row].ID.Name(), "")
@@ -65,57 +66,10 @@ func (window *VaultWindow) createComponents() *VaultWindow {
 					log.Fatal(err)
 				}
 				log.Println("Secret's value copied to clipboard")
-
 			}
-			switch id.Col {
-			case 0:
-				b.SetText(window.Secrets[id.Row].ID.Name())
-			case 1:
-				b.SetText(window.Secrets[id.Row].Attributes.Created.String())
-			case 2:
-				if window.Secrets[id.Row].Attributes.Expires != nil {
-					b.SetText(window.Secrets[id.Row].Attributes.Expires.String())
-				} else {
-					b.SetText("No expiration")
-				}
-			case 3:
-				if window.Secrets[id.Row].ContentType != nil {
-					b.SetText(*window.Secrets[id.Row].ContentType)
-				} else {
-					b.SetText("N/A")
-				}
-			case 4:
-				if *window.Secrets[id.Row].Attributes.Enabled {
-					b.SetText("Enabled")
-				} else {
-					b.SetText("Disabled")
-				}
-
-			}
+			b.SetTextFromSecret(window.Secrets[id.Row])
 		},
-	)
-	window.Components.SecretsTab.Table.UpdateHeader = func(id widget.TableCellID, template fyne.CanvasObject) {
-		b := template.(*widget.Label)
-		switch id.Col {
-		case -1:
-			b.SetText(fmt.Sprintf("%d", id.Row+1))
-		case 0:
-			b.SetText("Name")
-		case 1:
-			b.SetText("Creation date")
-		case 2:
-			b.SetText("Expiration date")
-		case 3:
-			b.SetText("Content-type")
-		case 4:
-			b.SetText("Enabled")
-		}
-	}
-	window.Components.SecretsTab.Table.SetColumnWidth(0, 250)
-	window.Components.SecretsTab.Table.SetColumnWidth(1, 250)
-	window.Components.SecretsTab.Table.SetColumnWidth(2, 250)
-	window.Components.SecretsTab.Table.SetColumnWidth(3, 100)
-	window.Components.SecretsTab.Table.SetColumnWidth(4, 100)
+	})
 
 	window.Components.SecretsTab.Search = container.NewBorder(nil, nil, nil, widget.NewButton("Filter", func() {}), widget.NewEntry())
 
