@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
@@ -26,7 +25,7 @@ type RootWindow struct {
 }
 
 func (window *RootWindow) Init() *RootWindow {
-	window.app = app.New()
+	window.app = fyne.CurrentApp()
 	window.app.Settings().SetTheme(&themes.TransparentTheme{})
 
 	window.this = window.app.NewWindow("Key Vault Manager")

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"fyne.io/fyne/v2/app"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
@@ -28,5 +29,6 @@ func main() {
 	w := windows.RootWindow{
 		Logo: resourceLogoPng,
 	}
+	app.New()
 	w.Init().CreateComponents().SetContent().Run()
 }
