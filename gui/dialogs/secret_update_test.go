@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewSecretUpdateDialog(t *testing.T) {
-	d := NewSecretUpdateDialog(nil, "test-vault", "test-secret")
+	d := NewSecretUpdateDialog(nil, "test-vault", "test-secret", nil)
 
 	require.Equal(t, "test-vault", d.Metadata.VaultName)
 	require.Equal(t, "test-secret", d.Metadata.SecretName)
@@ -18,7 +18,7 @@ func TestNewSecretUpdateDialog(t *testing.T) {
 func TestSecretUpdateDialogUpdate(t *testing.T) {
 	f := factory.GetInstance()
 	f.SecretFactory = factory.GetSecretClientMock(1, nil)
-	d := NewSecretUpdateDialog(nil, "test-vault", "test-secret")
+	d := NewSecretUpdateDialog(nil, "test-vault", "test-secret", nil)
 
 	require.NoError(t, d.Update("new-value"))
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/nu12/kvm/gui/components"
 	"github.com/nu12/kvm/gui/dialogs"
+	"github.com/nu12/kvm/gui/notifications"
 	"github.com/nu12/kvm/services"
 
 	"golang.design/x/clipboard"
@@ -18,6 +19,7 @@ import (
 type VaultWindow struct {
 	//parent    *RootWindow
 	this      fyne.Window
+	action    *notifications.Activity
 	VaultName string
 	Secrets   []*azsecrets.SecretProperties
 
@@ -45,6 +47,7 @@ func initVaultWindow(vaultName string) *VaultWindow {
 		Secrets:   []*azsecrets.SecretProperties{},
 		VaultName: vaultName,
 		this:      fyne.CurrentApp().NewWindow("Vault: " + vaultName),
+		action:    notifications.NewActivity(),
 	}
 	vaultWindow.this.Resize(fyne.Size{Width: 1100, Height: 400})
 	vaultWindow.this.Show()
@@ -62,16 +65,23 @@ func (window *VaultWindow) createComponents() *VaultWindow {
 			b := o.(*components.SecretCell)
 			b.CellID = id
 			b.DoubleTapFunc = func() {
-				v, _ := services.GetSecret(window.VaultName, window.Secrets[id.Row].ID.Name(), "")
-				if _, err := clipboard.Write(context.Background(), clipboard.FmtText, []byte(v)); err != nil {
-					log.Fatal(err)
-				}
-				log.Println("Secret's value copied to clipboard")
+				secretName := window.Secrets[id.Row].ID.Name()
+				window.action.Start("Fetching secret value")
+				go func() {
+					value, _ := services.GetSecret(window.VaultName, secretName, "")
+					_, err := clipboard.Write(context.Background(), clipboard.FmtText, []byte(value))
+					if err != nil {
+						window.action.Stop("Failed to copy secret value")
+					} else {
+						window.action.Stop("Secret's value copied to clipboard")
+					}
+				}()
 			}
 			b.UpdateDialog = dialogs.NewSecretUpdateDialog(
 				window.this,
 				window.VaultName,
 				window.Secrets[id.Row].ID.Name(),
+				window.action,
 			)
 			b.SetTextFromSecret(window.Secrets[id.Row])
 		},
@@ -86,7 +96,7 @@ func (window *VaultWindow) setContent() *VaultWindow {
 	window.Components.SecretsTab.Content = container.NewTabItem(
 		"Secrets", container.NewBorder(
 			window.Components.SecretsTab.Search,
-			nil,
+			window.action,
 			nil,
 			nil,
 			window.Components.SecretsTab.Table,
@@ -110,7 +120,11 @@ func (window *VaultWindow) setContent() *VaultWindow {
 }
 
 func (window *VaultWindow) run() *VaultWindow {
-	window.Secrets, _ = services.GetSecrets(window.VaultName)
-	window.Components.SecretsTab.Table.Show()
+	fyne.Do(func() {
+
+		window.Secrets, _ = services.GetSecrets(window.VaultName)
+		window.Components.SecretsTab.Table.Refresh()
+		window.action.Stop("Done")
+	})
 	return window
 }

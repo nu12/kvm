@@ -2,6 +2,7 @@ package windows
 
 import (
 	"testing"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -9,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/nu12/kvm/factory"
+	"github.com/nu12/kvm/gui/notifications"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,6 +19,8 @@ func TestVaultInit(t *testing.T) {
 	require.NotNil(t, vaultWindow.Components)
 	require.NotNil(t, vaultWindow.Secrets)
 	require.Equal(t, 0, len(vaultWindow.Secrets))
+	require.NotNil(t, vaultWindow.action)
+	require.True(t, vaultWindow.action.Visible())
 
 	require.NotNil(t, vaultWindow.Components.SecretsTab)
 	require.Nil(t, vaultWindow.Components.SecretsTab.Content)
@@ -43,7 +47,8 @@ func TestVaultCreateComponents(t *testing.T) {
 func TestVaultSetContent(t *testing.T) {
 	test.NewApp()
 	vaultWindow := &VaultWindow{
-		this: fyne.CurrentApp().NewWindow("Vault: " + "test"),
+		this:   fyne.CurrentApp().NewWindow("Vault: " + "test"),
+		action: notifications.NewActivity(),
 	}
 
 	vaultWindow.Components.SecretsTab.Search = container.NewCenter(widget.NewEntry())
@@ -63,6 +68,7 @@ func TestVaultRun(t *testing.T) {
 	f.SecretFactory = factory.GetSecretClientMock(2, nil)
 
 	vaultWindow := &VaultWindow{
+		action:  notifications.NewActivity(),
 		Secrets: []*azsecrets.SecretProperties{},
 		Components: struct {
 			SecretsTab struct {
@@ -88,5 +94,7 @@ func TestVaultRun(t *testing.T) {
 	}
 
 	vaultWindow.run()
-	require.Equal(t, 2, len(vaultWindow.Secrets))
+	require.Eventually(t, func() bool {
+		return len(vaultWindow.Secrets) == 2
+	}, time.Second, 10*time.Millisecond)
 }
