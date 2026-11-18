@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
 	"github.com/go-gl/glfw/v3.4/glfw"
 	"github.com/nu12/kvm/gui/notifications"
 	"github.com/nu12/kvm/services"
@@ -45,8 +46,9 @@ func (splash *SplashWindow) LoadAsync(table *widget.Table, counter *widget.Label
 		vaults, err := services.GetKeyVaults()
 		notifications.OnErrorCloseApplication(err, splash.parent.this)
 		splash.parent.Vaults = vaults
+		splash.parent.VisibleVaults = append([]*armkeyvault.Vault(nil), vaults...)
 		table.Refresh()
-		counter.SetText(fmt.Sprintf("Showing %d out of %d key vaults.", len(splash.parent.Vaults), len(splash.parent.Vaults)))
+		counter.SetText(fmt.Sprintf("Showing %d out of %d key vaults.", len(splash.parent.VisibleVaults), len(splash.parent.Vaults)))
 		fyne.Do(func() {
 			splash.this.Close() // ← Hide, not Close (see note below)
 			fyne.CurrentApp().Settings().SetTheme(theme.DefaultTheme())

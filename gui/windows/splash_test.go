@@ -82,6 +82,7 @@ func TestLoadAsync(t *testing.T) {
 	}
 
 	require.Equal(t, 3, len(root.Vaults))
+	require.Equal(t, root.Vaults, root.VisibleVaults)
 	require.Equal(t, "Showing 3 out of 3 key vaults.", counter.Text)
 }
 
