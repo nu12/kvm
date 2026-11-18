@@ -42,7 +42,8 @@ func (window *RootWindow) Init() *RootWindow {
 func (window *RootWindow) CreateComponents() *RootWindow {
 	window.Components.SearchEntry = widget.NewEntry()
 	window.Components.SearchEntry.OnChanged = window.filterVaults
-	window.Components.Search = container.NewBorder(nil, nil, nil, widget.NewButton("Filter", func() {}), window.Components.SearchEntry)
+	window.Components.SearchEntry.PlaceHolder = "Type to filter vaults..."
+	window.Components.Search = container.NewVBox(window.Components.SearchEntry)
 
 	window.Components.Table = components.NewTable(components.TableConfig{
 		RowCount:    func() int { return len(window.VisibleVaults) },

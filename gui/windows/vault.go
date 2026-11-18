@@ -63,6 +63,9 @@ func initVaultWindow(vaultName string) *VaultWindow {
 func (window *VaultWindow) createComponents() *VaultWindow {
 	window.Components.SecretsTab.SearchEntry = widget.NewEntry()
 	window.Components.SecretsTab.SearchEntry.OnChanged = window.filterSecrets
+	window.Components.SecretsTab.SearchEntry.PlaceHolder = "Type to filter secrets..."
+	window.Components.SecretsTab.Search = container.NewVBox(window.Components.SecretsTab.SearchEntry)
+
 	window.Components.SecretsTab.Table = components.NewTable(components.TableConfig{
 		RowCount:    func() int { return len(window.VisibleSecrets) },
 		Headers:     []string{"Name", "Creation date", "Expiration date", "Content-type", "Enabled"},
@@ -93,8 +96,6 @@ func (window *VaultWindow) createComponents() *VaultWindow {
 			b.SetTextFromSecret(window.VisibleSecrets[id.Row])
 		},
 	})
-
-	window.Components.SecretsTab.Search = container.NewBorder(nil, nil, nil, widget.NewButton("Filter", func() {}), window.Components.SecretsTab.SearchEntry)
 
 	return window
 }
