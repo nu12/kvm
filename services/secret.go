@@ -50,3 +50,21 @@ func GetSecret(vaultName string, secretName string, secretVersion string) (strin
 
 	return *resp.Value, nil
 }
+
+func SetSecret(vaultName string, secretName string, value string) error {
+	client, err := factory.GetSecretClient(vaultName)
+	if err != nil {
+		log.Printf("failed to create client: %v", err)
+		return err
+	}
+
+	_, err = client.SetSecret(context.TODO(), secretName, azsecrets.SetSecretParameters{
+		Value: &value,
+	}, nil)
+	if err != nil {
+		log.Printf("failed to update secret: %v", err)
+		return err
+	}
+
+	return nil
+}
