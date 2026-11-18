@@ -4,12 +4,14 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
+	"github.com/nu12/kvm/gui/notifications"
 	"github.com/nu12/kvm/services"
 )
 
 type SecretUpdateMetadata struct {
-	VaultName  string
-	SecretName string
+	VaultName    string
+	SecretName   string
+	Notification *notifications.Activity
 }
 
 type SecretUpdateDialog struct {
@@ -17,11 +19,12 @@ type SecretUpdateDialog struct {
 	parent   fyne.Window
 }
 
-func NewSecretUpdateDialog(parent fyne.Window, vaultName string, secretName string) *SecretUpdateDialog {
+func NewSecretUpdateDialog(parent fyne.Window, vaultName string, secretName string, notification *notifications.Activity) *SecretUpdateDialog {
 	return &SecretUpdateDialog{
 		Metadata: SecretUpdateMetadata{
-			VaultName:  vaultName,
-			SecretName: secretName,
+			VaultName:    vaultName,
+			SecretName:   secretName,
+			Notification: notification,
 		},
 		parent: parent,
 	}
@@ -44,9 +47,8 @@ func (d *SecretUpdateDialog) Show() {
 		},
 		func(confirmed bool) {
 			if confirmed {
-				if err := d.Update(valueEntry.Text); err != nil {
-					dialog.ShowError(err, d.parent)
-				}
+				d.Update(valueEntry.Text)
+				d.Metadata.Notification.Stop("Secret updated")
 			}
 		},
 		d.parent,

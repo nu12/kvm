@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/nu12/kvm/factory"
+	"github.com/nu12/kvm/gui/notifications"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,7 +47,8 @@ func TestVaultCreateComponents(t *testing.T) {
 func TestVaultSetContent(t *testing.T) {
 	test.NewApp()
 	vaultWindow := &VaultWindow{
-		this: fyne.CurrentApp().NewWindow("Vault: " + "test"),
+		this:   fyne.CurrentApp().NewWindow("Vault: " + "test"),
+		action: notifications.NewActivity(),
 	}
 
 	vaultWindow.Components.SecretsTab.Search = container.NewCenter(widget.NewEntry())
@@ -66,6 +68,7 @@ func TestVaultRun(t *testing.T) {
 	f.SecretFactory = factory.GetSecretClientMock(2, nil)
 
 	vaultWindow := &VaultWindow{
+		action:  notifications.NewActivity(),
 		Secrets: []*azsecrets.SecretProperties{},
 		Components: struct {
 			SecretsTab struct {

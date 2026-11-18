@@ -26,12 +26,14 @@ func NewTable(config TableConfig) *widget.Table {
 	}
 	//table.ShowHeaderColumn = false
 	table.UpdateHeader = func(id widget.TableCellID, template fyne.CanvasObject) {
-		b := template.(*widget.Label)
-		if id.Col == -1 {
-			b.SetText(fmt.Sprintf("%d", id.Row+1))
-		} else {
-			b.SetText(config.Headers[id.Col])
-		}
+		fyne.Do(func() {
+			b := template.(*widget.Label)
+			if id.Col == -1 {
+				b.SetText(fmt.Sprintf("%d", id.Row+1))
+			} else {
+				b.SetText(config.Headers[id.Col])
+			}
+		})
 	}
 
 	table.ExtendBaseWidget(table)

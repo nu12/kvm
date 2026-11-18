@@ -1,4 +1,4 @@
-package components
+package notifications
 
 import (
 	"fyne.io/fyne/v2"
@@ -24,15 +24,19 @@ func NewActivity() *Activity {
 }
 
 func (a *Activity) Start(text string) {
-	a.activity.Start()
-	a.activity.Show()
-	a.label.SetText(text)
+	fyne.Do(func() {
+		a.activity.Start()
+		a.activity.Show()
+		a.label.SetText(text)
+	})
 }
 
 func (a *Activity) Stop(text string) {
-	a.activity.Stop()
-	a.activity.Hide()
-	a.label.SetText(text)
+	fyne.Do(func() {
+		a.activity.Stop()
+		a.activity.Hide()
+		a.label.SetText(text)
+	})
 }
 
 func (a *Activity) CreateRenderer() fyne.WidgetRenderer {
