@@ -35,9 +35,8 @@ func getFromSubscriptions(subs []*armsubscriptions.Subscription) ([]*armkeyvault
 	log.Printf("Loading Azure Key Vaults")
 	for _, sub := range subs {
 		vs, _ := getFromSubscription(sub)
-		for _, v := range vs {
-			vaults = append(vaults, v)
-		}
+		vaults = append(vaults, vs...)
+
 	}
 	return vaults, nil
 }
@@ -58,9 +57,7 @@ func getFromSubscription(sub *armsubscriptions.Subscription) ([]*armkeyvault.Vau
 			return []*armkeyvault.Vault{}, err
 		}
 
-		for _, vault := range page.Value {
-			vaults = append(vaults, vault)
-		}
+		vaults = append(vaults, page.Value...)
 	}
 	return vaults, nil
 }

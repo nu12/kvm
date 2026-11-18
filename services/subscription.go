@@ -18,9 +18,8 @@ func GetAzureSubscriptions(client factory.SubscriptionClient) ([]*armsubscriptio
 			log.Printf("failed to advance page: %v", err)
 			return []*armsubscriptions.Subscription{}, err
 		}
-		for _, sub := range subPage.Value {
-			subs = append(subs, sub)
-		}
+		subs = append(subs, subPage.Value...)
+
 	}
 	return subs, nil
 }
