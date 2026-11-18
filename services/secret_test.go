@@ -26,3 +26,11 @@ func TestGetSecrets(t *testing.T) {
 	require.Equal(t, 2, len(secrets))
 	require.Equal(t, azsecrets.ID("https://test.vault.azure.net/secrets/secret-0"), *secrets[0].ID)
 }
+
+func TestSetSecret(t *testing.T) {
+	f := factory.GetInstance()
+	f.SecretFactory = factory.GetSecretClientMock(1, nil)
+
+	err := SetSecret("test", "test", "new-value")
+	require.NoError(t, err)
+}

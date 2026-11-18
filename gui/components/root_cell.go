@@ -1,7 +1,6 @@
 package components
 
 import (
-	"fmt"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -45,10 +44,6 @@ func (c *RootCell) TappedSecondary(pe *fyne.PointEvent) {
 	menu := fyne.NewMenu("Context",
 		fyne.NewMenuItem("Open Key Vault objects", func() {
 			c.DoubleTapFunc()
-		}),
-		fyne.NewMenuItemSeparator(),
-		fyne.NewMenuItem("Action 2", func() {
-			fmt.Println("Action 2 clicked")
 		}),
 	)
 	entryPos := fyne.CurrentApp().Driver().AbsolutePositionForObject(c)

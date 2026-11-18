@@ -110,6 +110,15 @@ func (m *MockSecretClient) GetSecret(ctx context.Context, name string, version s
 	}, nil
 }
 
+func (m *MockSecretClient) SetSecret(ctx context.Context, name string, parameters azsecrets.SetSecretParameters, options *azsecrets.SetSecretOptions) (azsecrets.SetSecretResponse, error) {
+	return azsecrets.SetSecretResponse{
+		Secret: azsecrets.Secret{
+			ID:    to.Ptr(azsecrets.ID(fmt.Sprintf("%s/secrets/%s", m.vaultName, name))),
+			Value: parameters.Value,
+		},
+	}, nil
+}
+
 func (m *MockSecretClient) NewListSecretPropertiesPager(options *azsecrets.ListSecretPropertiesOptions) *runtime.Pager[azsecrets.ListSecretPropertiesResponse] {
 	return runtime.NewPager(runtime.PagingHandler[azsecrets.ListSecretPropertiesResponse]{
 		More: func(lspr azsecrets.ListSecretPropertiesResponse) bool { return false },

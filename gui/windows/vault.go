@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/nu12/kvm/gui/components"
+	"github.com/nu12/kvm/gui/dialogs"
 	"github.com/nu12/kvm/services"
 
 	"golang.design/x/clipboard"
@@ -67,6 +68,11 @@ func (window *VaultWindow) createComponents() *VaultWindow {
 				}
 				log.Println("Secret's value copied to clipboard")
 			}
+			b.UpdateDialog = dialogs.NewSecretUpdateDialog(
+				window.this,
+				window.VaultName,
+				window.Secrets[id.Row].ID.Name(),
+			)
 			b.SetTextFromSecret(window.Secrets[id.Row])
 		},
 	})

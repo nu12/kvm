@@ -1,16 +1,16 @@
 package components
 
 import (
-	"fmt"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
+	"github.com/nu12/kvm/gui/dialogs"
 )
 
 type SecretCell struct {
 	widget.Label
 	DoubleTapFunc func()
+	UpdateDialog  *dialogs.SecretUpdateDialog
 	CellID        widget.TableCellID
 }
 
@@ -59,8 +59,10 @@ func (c *SecretCell) TappedSecondary(pe *fyne.PointEvent) {
 			c.DoubleTapFunc()
 		}),
 		fyne.NewMenuItemSeparator(),
-		fyne.NewMenuItem("Action 2", func() {
-			fmt.Println("Action 2 clicked")
+		fyne.NewMenuItem("Update value from input", func() {
+			if c.UpdateDialog != nil {
+				c.UpdateDialog.Show()
+			}
 		}),
 	)
 	entryPos := fyne.CurrentApp().Driver().AbsolutePositionForObject(c)
