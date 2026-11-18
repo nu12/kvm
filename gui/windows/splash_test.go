@@ -23,10 +23,8 @@ func TestNewSplash(t *testing.T) {
 		this: test.NewWindow(nil),
 	}
 
-	splash, err := NewSplash(root)
-	if err != nil {
-		t.Fatalf("NewSplash returned error: %v", err)
-	}
+	splash := NewSplash(root)
+
 	if splash == nil {
 		t.Fatal("NewSplash returned nil")
 	}
@@ -73,8 +71,7 @@ func TestLoadAsync(t *testing.T) {
 		},
 	}
 
-	err := splash.LoadAsync(table, counter)
-	require.NoError(t, err)
+	splash.LoadAsync(table, counter)
 
 	// Wait for the goroutine to finish (with timeout)
 	select {

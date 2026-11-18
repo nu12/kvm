@@ -68,7 +68,7 @@ func (window *RootWindow) SetContent() *RootWindow {
 	return window
 }
 func (window *RootWindow) Run() *RootWindow {
-	splash, _ := NewSplash(window)
+	splash := NewSplash(window)
 	splash.LoadAsync(window.Components.Table, window.Components.Counter)
 	window.app.Run() // blocks here, runs the event loop
 	return window

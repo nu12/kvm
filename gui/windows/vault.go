@@ -121,8 +121,9 @@ func (window *VaultWindow) setContent() *VaultWindow {
 
 func (window *VaultWindow) run() *VaultWindow {
 	fyne.Do(func() {
-
-		window.Secrets, _ = services.GetSecrets(window.VaultName)
+		secrets, err := services.GetSecrets(window.VaultName)
+		notifications.OnErrorCloseWindow(err, window.this)
+		window.Secrets = secrets
 		window.Components.SecretsTab.Table.Refresh()
 		window.action.Stop("Done")
 	})

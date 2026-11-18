@@ -127,6 +127,6 @@ func TestNewListSecretPropertiesPager(t *testing.T) {
 	assert.Equal(t, true, resp.More())
 	page, err := resp.NextPage(context.TODO())
 	assert.NoError(t, err)
-	assert.IsType(t, []*azsecrets.SecretProperties{}, page.SecretPropertiesListResult.Value)
+	assert.IsType(t, []*azsecrets.SecretProperties{}, page.Value)
 	assert.Equal(t, azsecrets.ID("https://vault.vault.azure.net/secrets/secret-0"), *page.SecretPropertiesListResult.Value[0].ID)
 }

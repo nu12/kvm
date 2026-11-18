@@ -47,7 +47,8 @@ func (d *SecretUpdateDialog) Show() {
 		},
 		func(confirmed bool) {
 			if confirmed {
-				d.Update(valueEntry.Text)
+				err := d.Update(valueEntry.Text)
+				notifications.OnErrorContinue(err, d.parent)
 				d.Metadata.Notification.Stop("Secret updated")
 			}
 		},

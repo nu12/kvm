@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/go-gl/glfw/v3.4/glfw"
+	"github.com/nu12/kvm/gui/notifications"
 	"github.com/nu12/kvm/services"
 )
 
@@ -17,7 +18,7 @@ type SplashWindow struct {
 	this   fyne.Window
 }
 
-func NewSplash(parent *RootWindow) (*SplashWindow, error) {
+func NewSplash(parent *RootWindow) *SplashWindow {
 
 	var splash fyne.Window
 	if drv, ok := fyne.CurrentApp().Driver().(desktop.Driver); ok {
@@ -36,22 +37,20 @@ func NewSplash(parent *RootWindow) (*SplashWindow, error) {
 	return &SplashWindow{
 		parent: parent,
 		this:   splash,
-	}, nil
+	}
 }
 
-func (splash *SplashWindow) LoadAsync(table *widget.Table, counter *widget.Label) error {
+func (splash *SplashWindow) LoadAsync(table *widget.Table, counter *widget.Label) {
 	go func() {
-		splash.parent.Vaults, _ = services.GetKeyVaults()
-		//table.Show()
+		vaults, err := services.GetKeyVaults()
+		notifications.OnErrorCloseApplication(err, splash.parent.this)
+		splash.parent.Vaults = vaults
 		table.Refresh()
 		counter.SetText(fmt.Sprintf("Showing %d out of %d key vaults.", len(splash.parent.Vaults), len(splash.parent.Vaults)))
 		fyne.Do(func() {
 			splash.this.Close() // ← Hide, not Close (see note below)
-
 			fyne.CurrentApp().Settings().SetTheme(theme.DefaultTheme())
-
 			splash.parent.this.Show() // ← Show, NOT ShowAndRun
 		})
 	}()
-	return nil
 }
