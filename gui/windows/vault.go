@@ -2,7 +2,9 @@ package windows
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -18,16 +20,18 @@ import (
 
 type VaultWindow struct {
 	//parent    *RootWindow
-	this      fyne.Window
-	action    *notifications.Activity
-	VaultName string
-	Secrets   []*azsecrets.SecretProperties
+	this           fyne.Window
+	action         *notifications.Activity
+	VaultName      string
+	Secrets        []*azsecrets.SecretProperties
+	VisibleSecrets []*azsecrets.SecretProperties
 
 	Components struct {
 		SecretsTab struct {
-			Content *container.TabItem
-			Search  *fyne.Container
-			Table   *widget.Table
+			Content     *container.TabItem
+			Search      *fyne.Container
+			SearchEntry *widget.Entry
+			Table       *widget.Table
 		}
 		CertificatesTab struct {
 			Content *container.TabItem
@@ -44,10 +48,11 @@ func NewVaultWindow(vaultName string) *VaultWindow {
 
 func initVaultWindow(vaultName string) *VaultWindow {
 	vaultWindow := &VaultWindow{
-		Secrets:   []*azsecrets.SecretProperties{},
-		VaultName: vaultName,
-		this:      fyne.CurrentApp().NewWindow("Vault: " + vaultName),
-		action:    notifications.NewActivity(),
+		Secrets:        []*azsecrets.SecretProperties{},
+		VisibleSecrets: []*azsecrets.SecretProperties{},
+		VaultName:      vaultName,
+		this:           fyne.CurrentApp().NewWindow("Vault: " + vaultName),
+		action:         notifications.NewActivity(),
 	}
 	vaultWindow.this.Resize(fyne.Size{Width: 1100, Height: 400})
 	vaultWindow.this.Show()
@@ -56,8 +61,10 @@ func initVaultWindow(vaultName string) *VaultWindow {
 }
 
 func (window *VaultWindow) createComponents() *VaultWindow {
+	window.Components.SecretsTab.SearchEntry = widget.NewEntry()
+	window.Components.SecretsTab.SearchEntry.OnChanged = window.filterSecrets
 	window.Components.SecretsTab.Table = components.NewTable(components.TableConfig{
-		RowCount:    func() int { return len(window.Secrets) },
+		RowCount:    func() int { return len(window.VisibleSecrets) },
 		Headers:     []string{"Name", "Creation date", "Expiration date", "Content-type", "Enabled"},
 		ColumnWidth: []float32{250, 250, 250, 100, 100},
 		NewCell:     func() fyne.CanvasObject { return components.NewSecretCell() },
@@ -65,7 +72,7 @@ func (window *VaultWindow) createComponents() *VaultWindow {
 			b := o.(*components.SecretCell)
 			b.CellID = id
 			b.DoubleTapFunc = func() {
-				secretName := window.Secrets[id.Row].ID.Name()
+				secretName := window.VisibleSecrets[id.Row].ID.Name()
 				window.action.Start("Fetching secret value")
 				go func() {
 					value, _ := services.GetSecret(window.VaultName, secretName, "")
@@ -80,16 +87,63 @@ func (window *VaultWindow) createComponents() *VaultWindow {
 			b.UpdateDialog = dialogs.NewSecretUpdateDialog(
 				window.this,
 				window.VaultName,
-				window.Secrets[id.Row].ID.Name(),
+				window.VisibleSecrets[id.Row].ID.Name(),
 				window.action,
 			)
-			b.SetTextFromSecret(window.Secrets[id.Row])
+			b.SetTextFromSecret(window.VisibleSecrets[id.Row])
 		},
 	})
 
-	window.Components.SecretsTab.Search = container.NewBorder(nil, nil, nil, widget.NewButton("Filter", func() {}), widget.NewEntry())
+	window.Components.SecretsTab.Search = container.NewBorder(nil, nil, nil, widget.NewButton("Filter", func() {}), window.Components.SecretsTab.SearchEntry)
 
 	return window
+}
+
+func (window *VaultWindow) filterSecrets(query string) {
+	query = strings.ToLower(strings.TrimSpace(query))
+	window.VisibleSecrets = make([]*azsecrets.SecretProperties, 0, len(window.Secrets))
+
+	for _, secret := range window.Secrets {
+		if query == "" || secretMatchesQuery(secret, query) {
+			window.VisibleSecrets = append(window.VisibleSecrets, secret)
+		}
+	}
+
+	if window.Components.SecretsTab.Table != nil {
+		window.Components.SecretsTab.Table.Refresh()
+	}
+}
+
+func secretMatchesQuery(secret *azsecrets.SecretProperties, query string) bool {
+	if secret == nil {
+		return false
+	}
+
+	var fields []string
+	if secret.ID != nil {
+		fields = append(fields, string(*secret.ID), secret.ID.Name())
+	}
+	if secret.ContentType != nil {
+		fields = append(fields, *secret.ContentType)
+	}
+	if secret.Attributes != nil {
+		if secret.Attributes.Created != nil {
+			fields = append(fields, secret.Attributes.Created.String())
+		}
+		if secret.Attributes.Expires != nil {
+			fields = append(fields, secret.Attributes.Expires.String())
+		}
+		if secret.Attributes.Enabled != nil {
+			fields = append(fields, fmt.Sprint(*secret.Attributes.Enabled))
+		}
+	}
+
+	for _, field := range fields {
+		if strings.Contains(strings.ToLower(field), query) {
+			return true
+		}
+	}
+	return false
 }
 
 func (window *VaultWindow) setContent() *VaultWindow {
@@ -124,7 +178,11 @@ func (window *VaultWindow) run() *VaultWindow {
 		secrets, err := services.GetSecrets(window.VaultName)
 		notifications.OnErrorCloseWindow(err, window.this)
 		window.Secrets = secrets
-		window.Components.SecretsTab.Table.Refresh()
+		query := ""
+		if window.Components.SecretsTab.SearchEntry != nil {
+			query = window.Components.SecretsTab.SearchEntry.Text
+		}
+		window.filterSecrets(query)
 		window.action.Stop("Done")
 	})
 	return window
