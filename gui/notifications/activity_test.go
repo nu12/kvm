@@ -16,6 +16,14 @@ func TestActivity(t *testing.T) {
 	require.True(t, activity.activity.Visible())
 	require.Equal(t, "Loading...", activity.label.Text)
 
+	activity.Start("Working")
+	require.Eventually(t, func() bool {
+		return activity.activity.Visible() && activity.label.Text == "Working"
+	}, time.Second, 10*time.Millisecond)
+	renderer := activity.CreateRenderer()
+	require.NotNil(t, renderer)
+	renderer.Destroy()
+
 	activity.Stop("Done")
 	require.Eventually(t, func() bool {
 		return !activity.activity.Visible() && activity.label.Text == "Done"

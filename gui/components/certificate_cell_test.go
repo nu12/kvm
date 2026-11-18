@@ -2,6 +2,7 @@ package components
 
 import (
 	"testing"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/test"
@@ -36,6 +37,44 @@ func TestCertificateCellText(t *testing.T) {
 	cell.CellID = widget.TableCellID{Col: 4}
 	cell.SetTextFromCertificate(certificate)
 	require.Equal(t, "abcd", cell.Text)
+}
+
+func TestCertificateCellTextMetadata(t *testing.T) {
+	created := time.Date(2025, time.January, 2, 3, 4, 5, 0, time.UTC)
+	expires := created.Add(24 * time.Hour)
+	certificate := &azcertificates.CertificateProperties{
+		Attributes: &azcertificates.CertificateAttributes{
+			Created: &created,
+			Expires: &expires,
+			Enabled: to.Ptr(false),
+		},
+	}
+	cell := NewCertificateCell()
+
+	cell.CellID.Col = 1
+	cell.SetTextFromCertificate(certificate)
+	require.Equal(t, created.String(), cell.Text)
+
+	cell.CellID.Col = 2
+	cell.SetTextFromCertificate(certificate)
+	require.Equal(t, expires.String(), cell.Text)
+
+	cell.CellID.Col = 3
+	cell.SetTextFromCertificate(certificate)
+	require.Equal(t, "Disabled", cell.Text)
+
+	certificate.Attributes = nil
+	cell.CellID.Col = 1
+	cell.SetTextFromCertificate(certificate)
+	require.Equal(t, "N/A", cell.Text)
+
+	cell.CellID.Col = 3
+	cell.SetTextFromCertificate(certificate)
+	require.Equal(t, "N/A", cell.Text)
+
+	cell.CellID.Col = 4
+	cell.SetTextFromCertificate(certificate)
+	require.Equal(t, "N/A", cell.Text)
 }
 
 func TestCertificateCellDoubleTapped(t *testing.T) {

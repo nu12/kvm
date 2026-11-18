@@ -173,29 +173,33 @@ func (tab *CertificateTab) download(certificateName string) {
 			}
 
 			tab.action.Stop("Choose where to save certificate")
-			saveDialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
-				if err != nil {
-					tab.action.Stop("Failed to save certificate")
-					notifications.OnErrorContinue(err, tab.parent)
-					return
-				}
-				if writer == nil {
-					tab.action.Stop("Certificate download cancelled")
-					return
-				}
-
-				if err := writeCertificate(writer, certificate); err != nil {
-					tab.action.Stop("Failed to save certificate")
-					notifications.OnErrorContinue(err, tab.parent)
-					return
-				}
-				tab.action.Stop("Certificate downloaded")
-			}, tab.parent)
-			saveDialog.SetFileName(certificateName + ".cer")
-			saveDialog.SetFilter(storage.NewExtensionFileFilter([]string{".cer"}))
-			saveDialog.Show()
+			tab.newCertificateSaveDialog(certificateName, certificate).Show()
 		})
 	}()
+}
+
+func (tab *CertificateTab) newCertificateSaveDialog(certificateName string, certificate []byte) *dialog.FileDialog {
+	saveDialog := dialog.NewFileSave(func(writer fyne.URIWriteCloser, err error) {
+		if err != nil {
+			tab.action.Stop("Failed to save certificate")
+			notifications.OnErrorContinue(err, tab.parent)
+			return
+		}
+		if writer == nil {
+			tab.action.Stop("Certificate download cancelled")
+			return
+		}
+
+		if err := writeCertificate(writer, certificate); err != nil {
+			tab.action.Stop("Failed to save certificate")
+			notifications.OnErrorContinue(err, tab.parent)
+			return
+		}
+		tab.action.Stop("Certificate downloaded")
+	}, tab.parent)
+	saveDialog.SetFileName(certificateName + ".cer")
+	saveDialog.SetFilter(storage.NewExtensionFileFilter([]string{".cer"}))
+	return saveDialog
 }
 
 func writeCertificate(writer io.WriteCloser, certificate []byte) error {
