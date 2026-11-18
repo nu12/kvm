@@ -2,6 +2,7 @@ package windows
 
 import (
 	"testing"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -17,6 +18,8 @@ func TestVaultInit(t *testing.T) {
 	require.NotNil(t, vaultWindow.Components)
 	require.NotNil(t, vaultWindow.Secrets)
 	require.Equal(t, 0, len(vaultWindow.Secrets))
+	require.NotNil(t, vaultWindow.action)
+	require.True(t, vaultWindow.action.Visible())
 
 	require.NotNil(t, vaultWindow.Components.SecretsTab)
 	require.Nil(t, vaultWindow.Components.SecretsTab.Content)
@@ -88,5 +91,7 @@ func TestVaultRun(t *testing.T) {
 	}
 
 	vaultWindow.run()
-	require.Equal(t, 2, len(vaultWindow.Secrets))
+	require.Eventually(t, func() bool {
+		return len(vaultWindow.Secrets) == 2
+	}, time.Second, 10*time.Millisecond)
 }

@@ -18,6 +18,7 @@ import (
 type VaultWindow struct {
 	//parent    *RootWindow
 	this      fyne.Window
+	action    *components.Activity
 	VaultName string
 	Secrets   []*azsecrets.SecretProperties
 
@@ -45,6 +46,7 @@ func initVaultWindow(vaultName string) *VaultWindow {
 		Secrets:   []*azsecrets.SecretProperties{},
 		VaultName: vaultName,
 		this:      fyne.CurrentApp().NewWindow("Vault: " + vaultName),
+		action:    components.NewActivity(),
 	}
 	vaultWindow.this.Resize(fyne.Size{Width: 1100, Height: 400})
 	vaultWindow.this.Show()
@@ -86,7 +88,7 @@ func (window *VaultWindow) setContent() *VaultWindow {
 	window.Components.SecretsTab.Content = container.NewTabItem(
 		"Secrets", container.NewBorder(
 			window.Components.SecretsTab.Search,
-			nil,
+			window.action,
 			nil,
 			nil,
 			window.Components.SecretsTab.Table,
@@ -110,7 +112,11 @@ func (window *VaultWindow) setContent() *VaultWindow {
 }
 
 func (window *VaultWindow) run() *VaultWindow {
-	window.Secrets, _ = services.GetSecrets(window.VaultName)
-	window.Components.SecretsTab.Table.Show()
+	window.action.Start("Loading secrets...")
+	go func() {
+		window.Secrets, _ = services.GetSecrets(window.VaultName)
+		window.Components.SecretsTab.Table.Refresh()
+		window.action.Stop("Done")
+	}()
 	return window
 }
