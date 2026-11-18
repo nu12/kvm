@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
@@ -33,4 +34,15 @@ func TestSetSecret(t *testing.T) {
 
 	err := SetSecret("test", "test", "new-value")
 	require.NoError(t, err)
+}
+
+func TestSecretServicesReturnFactoryErrors(t *testing.T) {
+	factory.GetInstance().SecretFactory = func(string) (factory.SecretClient, error) {
+		return nil, errors.New("secret client unavailable")
+	}
+
+	value, err := GetSecret("test", "secret", "")
+	require.Error(t, err)
+	require.Empty(t, value)
+	require.Error(t, SetSecret("test", "secret", "value"))
 }

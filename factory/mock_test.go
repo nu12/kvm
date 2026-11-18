@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -115,6 +117,10 @@ func TestGetSecret(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "SecretValue", *secret.Value)
 	assert.Equal(t, azsecrets.ID("/secrets/test/"), *secret.ID)
+	_, err = cli.SetSecret(context.TODO(), "test", azsecrets.SetSecretParameters{
+		Value: to.Ptr("value"),
+	}, nil)
+	assert.NoError(t, err)
 }
 
 func TestNewListSecretPropertiesPager(t *testing.T) {
@@ -129,4 +135,23 @@ func TestNewListSecretPropertiesPager(t *testing.T) {
 	assert.NoError(t, err)
 	assert.IsType(t, []*azsecrets.SecretProperties{}, page.Value)
 	assert.Equal(t, azsecrets.ID("https://vault.vault.azure.net/secrets/secret-0"), *page.SecretPropertiesListResult.Value[0].ID)
+}
+
+func TestCertificateClientMock(t *testing.T) {
+	f := GetInstance()
+	f.CertificateFactory = GetCertificateClientMock(2, nil)
+
+	client, err := GetCertificateClient("vault")
+	require.NoError(t, err)
+
+	pager := client.NewListCertificatePropertiesPager(nil)
+	require.True(t, pager.More())
+	page, err := pager.NextPage(context.Background())
+	require.NoError(t, err)
+	require.Len(t, page.Value, 2)
+	require.Equal(t, azcertificates.ID("https://vault.vault.azure.net/certificates/certificate-0"), *page.Value[0].ID)
+
+	certificate, err := client.GetCertificate(context.Background(), "certificate-0", "", nil)
+	require.NoError(t, err)
+	require.Equal(t, []byte("certificate data"), certificate.CER)
 }

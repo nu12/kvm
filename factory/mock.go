@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 )
 
@@ -142,6 +143,50 @@ func GetSecretClientMock(nbSecrets int, err error) func(string) (SecretClient, e
 		}
 		return &MockSecretClient{
 			Secrets: secrets,
+		}, err
+	}
+}
+
+type MockCertificateClient struct {
+	Certificates    []*azcertificates.CertificateProperties
+	CertificateData []byte
+	vaultName       string
+}
+
+func (m *MockCertificateClient) GetCertificate(ctx context.Context, name string, version string, options *azcertificates.GetCertificateOptions) (azcertificates.GetCertificateResponse, error) {
+	return azcertificates.GetCertificateResponse{
+		Certificate: azcertificates.Certificate{
+			ID:  to.Ptr(azcertificates.ID(fmt.Sprintf("https://%s.vault.azure.net/certificates/%s/%s", m.vaultName, name, version))),
+			CER: m.CertificateData,
+		},
+	}, nil
+}
+
+func (m *MockCertificateClient) NewListCertificatePropertiesPager(options *azcertificates.ListCertificatePropertiesOptions) *runtime.Pager[azcertificates.ListCertificatePropertiesResponse] {
+	return runtime.NewPager(runtime.PagingHandler[azcertificates.ListCertificatePropertiesResponse]{
+		More: func(page azcertificates.ListCertificatePropertiesResponse) bool { return false },
+		Fetcher: func(ctx context.Context, page *azcertificates.ListCertificatePropertiesResponse) (azcertificates.ListCertificatePropertiesResponse, error) {
+			return azcertificates.ListCertificatePropertiesResponse{
+				CertificatePropertiesListResult: azcertificates.CertificatePropertiesListResult{
+					Value: m.Certificates,
+				},
+			}, nil
+		},
+	})
+}
+
+func GetCertificateClientMock(nbCertificates int, err error) func(string) (CertificateClient, error) {
+	return func(vaultName string) (CertificateClient, error) {
+		certificates := make([]*azcertificates.CertificateProperties, 0, nbCertificates)
+		for i := range nbCertificates {
+			certificates = append(certificates, &azcertificates.CertificateProperties{
+				ID: to.Ptr(azcertificates.ID(fmt.Sprintf("https://%s.vault.azure.net/certificates/certificate-%d", vaultName, i))),
+			})
+		}
+		return &MockCertificateClient{
+			Certificates:    certificates,
+			CertificateData: []byte("certificate data"),
+			vaultName:       vaultName,
 		}, err
 	}
 }

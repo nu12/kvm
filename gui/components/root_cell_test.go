@@ -33,6 +33,25 @@ func TestSetTextFromVault(t *testing.T) {
 	assert.Equal(t, "test-0", c.Text)
 }
 
+func TestSetTextFromVaultColumns(t *testing.T) {
+	vault := &armkeyvault.Vault{
+		ID:       to.Ptr("/subscriptions/sub-0/resourceGroups/test/providers/Microsoft.KeyVault/vaults/test-0"),
+		Name:     to.Ptr("test-0"),
+		Location: to.Ptr("West US"),
+	}
+	cell := &RootCell{}
+
+	for col, expected := range map[int]string{
+		1: "test",
+		2: "sub-0",
+		3: "West US",
+	} {
+		cell.CellID.Col = col
+		cell.SetTextFromVault(vault)
+		assert.Equal(t, expected, cell.Text)
+	}
+}
+
 func TestRootCellDoubleTapped(t *testing.T) {
 	c := &RootCell{}
 	assert.NotPanics(t, func() { c.DoubleTapped(&fyne.PointEvent{}) })

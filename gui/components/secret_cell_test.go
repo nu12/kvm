@@ -2,6 +2,7 @@ package components
 
 import (
 	"testing"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/test"
@@ -31,6 +32,45 @@ func TestSetTextFromSecret(t *testing.T) {
 		ID: to.Ptr(azsecrets.ID("https://test.vault.azure.net/secrets/secret-0")),
 	})
 	assert.Equal(t, "secret-0", c.Text)
+}
+
+func TestSetTextFromSecretColumns(t *testing.T) {
+	created := time.Date(2025, time.January, 2, 3, 4, 5, 0, time.UTC)
+	expires := created.Add(24 * time.Hour)
+	secret := &azsecrets.SecretProperties{
+		Attributes: &azsecrets.SecretAttributes{
+			Created: &created,
+			Expires: &expires,
+			Enabled: to.Ptr(true),
+		},
+		ContentType: to.Ptr("application/json"),
+	}
+	cell := &SecretCell{}
+
+	cell.CellID.Col = 1
+	cell.SetTextFromSecret(secret)
+	assert.Equal(t, created.String(), cell.Text)
+
+	cell.CellID.Col = 2
+	cell.SetTextFromSecret(secret)
+	assert.Equal(t, expires.String(), cell.Text)
+	secret.Attributes.Expires = nil
+	cell.SetTextFromSecret(secret)
+	assert.Equal(t, "No expiration", cell.Text)
+
+	cell.CellID.Col = 3
+	cell.SetTextFromSecret(secret)
+	assert.Equal(t, "application/json", cell.Text)
+	secret.ContentType = nil
+	cell.SetTextFromSecret(secret)
+	assert.Equal(t, "N/A", cell.Text)
+
+	cell.CellID.Col = 4
+	cell.SetTextFromSecret(secret)
+	assert.Equal(t, "Enabled", cell.Text)
+	*secret.Attributes.Enabled = false
+	cell.SetTextFromSecret(secret)
+	assert.Equal(t, "Disabled", cell.Text)
 }
 
 func TestDoubleTapped(t *testing.T) {
