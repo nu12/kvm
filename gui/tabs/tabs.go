@@ -19,7 +19,7 @@ func New(vaultName string, parent fyne.Window, action *notifications.Activity) *
 	tabSet := &Tabs{
 		Secrets:      NewSecretTab(vaultName, parent, action),
 		Certificates: NewCertificateTab(vaultName, parent, action),
-		Keys:         NewKeyTab(),
+		Keys:         NewKeyTab(vaultName, parent, action),
 	}
 	tabSet.Widget = container.NewAppTabs(
 		tabSet.Secrets.Content(),
@@ -30,6 +30,9 @@ func New(vaultName string, parent fyne.Window, action *notifications.Activity) *
 		log.Printf("Selected tab %s", item.Text)
 		if item == tabSet.Certificates.Content() {
 			tabSet.Certificates.Load()
+		}
+		if item == tabSet.Keys.Content() {
+			tabSet.Keys.Load()
 		}
 	}
 	return tabSet
