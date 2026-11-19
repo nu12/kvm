@@ -113,3 +113,43 @@ func TestGetPublicKeyReturnsClientError(t *testing.T) {
 	require.ErrorContains(t, err, "key retrieval failed")
 	require.Empty(t, export.Data)
 }
+
+func TestMarshalPublicKeyRejectsIncompletePublicMaterial(t *testing.T) {
+	tests := []struct {
+		name string
+		key  *azkeys.JSONWebKey
+	}{
+		{name: "nil key"},
+		{name: "missing key type", key: &azkeys.JSONWebKey{}},
+		{
+			name: "RSA missing modulus",
+			key:  &azkeys.JSONWebKey{Kty: to.Ptr(azkeys.KeyTypeRSA), E: []byte{1, 0, 1}},
+		},
+		{
+			name: "EC missing curve",
+			key:  &azkeys.JSONWebKey{Kty: to.Ptr(azkeys.KeyTypeEC), X: []byte{1}, Y: []byte{2}},
+		},
+		{
+			name: "RSA missing exponent",
+			key:  &azkeys.JSONWebKey{Kty: to.Ptr(azkeys.KeyTypeRSA), N: []byte{1}},
+		},
+	}
+
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			export, err := marshalPublicKey(testCase.key)
+			require.Error(t, err)
+			require.Empty(t, export.Data)
+		})
+	}
+}
+
+func TestMarshalPublicKeyRejectsInvalidRSAExponent(t *testing.T) {
+	export, err := marshalPublicKey(&azkeys.JSONWebKey{
+		Kty: to.Ptr(azkeys.KeyTypeRSA),
+		N:   []byte{1},
+		E:   []byte{},
+	})
+	require.Error(t, err)
+	require.Empty(t, export.Data)
+}

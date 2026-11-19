@@ -2,6 +2,7 @@ package tabs
 
 import (
 	"testing"
+	"time"
 
 	"fyne.io/fyne/v2/test"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
@@ -18,6 +19,10 @@ func TestSecretTabFiltersVisibleSecrets(t *testing.T) {
 		{
 			ID:          to.Ptr(azsecrets.ID("https://test.vault.azure.net/secrets/Alpha")),
 			ContentType: to.Ptr("text/plain"),
+			Attributes: &azsecrets.SecretAttributes{
+				Created: to.Ptr(time.Date(2025, time.January, 2, 3, 4, 5, 0, time.UTC)),
+				Enabled: to.Ptr(true),
+			},
 		},
 		{
 			ID:          to.Ptr(azsecrets.ID("https://test.vault.azure.net/secrets/Beta")),

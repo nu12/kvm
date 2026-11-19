@@ -5,6 +5,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/test"
+	"github.com/nu12/kvm/factory"
 	"github.com/nu12/kvm/gui/notifications"
 	"github.com/stretchr/testify/require"
 )
@@ -43,4 +44,19 @@ func TestVaultSetContent(t *testing.T) {
 	vaultWindow.createComponents().setContent()
 	require.NotNil(t, vaultWindow.this.Content())
 	require.Same(t, vaultWindow.Tabs.Widget, vaultWindow.this.Content())
+}
+
+func TestVaultRunLoadsSecretsTab(t *testing.T) {
+	test.NewApp()
+	factory.GetInstance().SecretFactory = factory.GetSecretClientMock(1, nil)
+	vaultWindow := &VaultWindow{
+		this:      fyne.CurrentApp().NewWindow("Vault: test"),
+		VaultName: "test",
+		action:    notifications.NewActivity(),
+	}
+	vaultWindow.createComponents()
+
+	require.NotPanics(t, func() {
+		vaultWindow.run()
+	})
 }
