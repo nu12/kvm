@@ -11,6 +11,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 )
 
@@ -187,6 +188,52 @@ func GetCertificateClientMock(nbCertificates int, err error) func(string) (Certi
 			Certificates:    certificates,
 			CertificateData: []byte("certificate data"),
 			vaultName:       vaultName,
+		}, err
+	}
+}
+
+type MockKeyClient struct {
+	Keys      []*azkeys.KeyProperties
+	PublicKey *azkeys.JSONWebKey
+	KeyError  error
+}
+
+func (m *MockKeyClient) GetKey(ctx context.Context, name string, version string, options *azkeys.GetKeyOptions) (azkeys.GetKeyResponse, error) {
+	return azkeys.GetKeyResponse{
+		KeyBundle: azkeys.KeyBundle{
+			Key: m.PublicKey,
+		},
+	}, m.KeyError
+}
+
+func (m *MockKeyClient) NewListKeyPropertiesPager(options *azkeys.ListKeyPropertiesOptions) *runtime.Pager[azkeys.ListKeyPropertiesResponse] {
+	return runtime.NewPager(runtime.PagingHandler[azkeys.ListKeyPropertiesResponse]{
+		More: func(page azkeys.ListKeyPropertiesResponse) bool { return false },
+		Fetcher: func(ctx context.Context, page *azkeys.ListKeyPropertiesResponse) (azkeys.ListKeyPropertiesResponse, error) {
+			return azkeys.ListKeyPropertiesResponse{
+				KeyPropertiesListResult: azkeys.KeyPropertiesListResult{
+					Value: m.Keys,
+				},
+			}, nil
+		},
+	})
+}
+
+func GetKeyClientMock(nbKeys int, err error) func(string) (KeyClient, error) {
+	return func(vaultName string) (KeyClient, error) {
+		keys := make([]*azkeys.KeyProperties, 0, nbKeys)
+		for i := range nbKeys {
+			keys = append(keys, &azkeys.KeyProperties{
+				KID: to.Ptr(azkeys.ID(fmt.Sprintf("https://%s.vault.azure.net/keys/key-%d", vaultName, i))),
+			})
+		}
+		return &MockKeyClient{
+			Keys: keys,
+			PublicKey: &azkeys.JSONWebKey{
+				Kty: to.Ptr(azkeys.KeyTypeRSA),
+				N:   []byte{1, 2, 3},
+				E:   []byte{1, 0, 1},
+			},
 		}, err
 	}
 }

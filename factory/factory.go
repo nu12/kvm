@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 )
 
@@ -36,12 +37,18 @@ type CertificateClient interface {
 	GetCertificate(ctx context.Context, name string, version string, options *azcertificates.GetCertificateOptions) (azcertificates.GetCertificateResponse, error)
 }
 
+type KeyClient interface {
+	NewListKeyPropertiesPager(options *azkeys.ListKeyPropertiesOptions) *runtime.Pager[azkeys.ListKeyPropertiesResponse]
+	GetKey(ctx context.Context, name string, version string, options *azkeys.GetKeyOptions) (azkeys.GetKeyResponse, error)
+}
+
 type Factory struct {
 	CredentialFactory   func() (AccountClient, error)
 	SubscriptionFactory func() (SubscriptionClient, error)
 	VaultFactory        func(string) (VaultClient, error)
 	SecretFactory       func(string) (SecretClient, error)
 	CertificateFactory  func(string) (CertificateClient, error)
+	KeyFactory          func(string) (KeyClient, error)
 }
 
 var instance *Factory
@@ -62,6 +69,9 @@ func GetSecretClient(vault string) (SecretClient, error) {
 }
 func GetCertificateClient(vault string) (CertificateClient, error) {
 	return GetInstance().CertificateFactory(vault)
+}
+func GetKeyClient(vault string) (KeyClient, error) {
+	return GetInstance().KeyFactory(vault)
 }
 
 func GetInstance() *Factory {

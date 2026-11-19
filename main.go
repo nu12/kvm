@@ -8,6 +8,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/nu12/kvm/factory"
 	"github.com/nu12/kvm/gui/windows"
@@ -28,6 +29,9 @@ func main() {
 	}
 	f.CertificateFactory = func(vault string) (factory.CertificateClient, error) {
 		return azcertificates.NewClient(fmt.Sprintf("https://%s.vault.azure.net/", vault), cred, nil)
+	}
+	f.KeyFactory = func(vault string) (factory.KeyClient, error) {
+		return azkeys.NewClient(fmt.Sprintf("https://%s.vault.azure.net/", vault), cred, nil)
 	}
 
 	w := windows.RootWindow{

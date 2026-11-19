@@ -101,3 +101,20 @@ func TestGetCertificateClient(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, client, mock)
 }
+
+func TestGetKeyClient(t *testing.T) {
+	resetSingleton()
+	defer resetSingleton()
+
+	mock := &MockKeyClient{}
+	GetInstance().KeyFactory = func(vault string) (KeyClient, error) {
+		if vault != "test-vault" {
+			t.Errorf("unexpected vault: %s", vault)
+		}
+		return mock, nil
+	}
+
+	client, err := GetKeyClient("test-vault")
+	assert.NoError(t, err)
+	assert.Equal(t, client, mock)
+}

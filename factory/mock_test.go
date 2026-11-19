@@ -11,6 +11,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -154,4 +155,25 @@ func TestCertificateClientMock(t *testing.T) {
 	certificate, err := client.GetCertificate(context.Background(), "certificate-0", "", nil)
 	require.NoError(t, err)
 	require.Equal(t, []byte("certificate data"), certificate.CER)
+}
+
+func TestKeyClientMock(t *testing.T) {
+	f := GetInstance()
+	f.KeyFactory = GetKeyClientMock(2, nil)
+
+	client, err := GetKeyClient("vault")
+	require.NoError(t, err)
+	require.IsType(t, &MockKeyClient{}, client)
+
+	pager := client.NewListKeyPropertiesPager(nil)
+	require.True(t, pager.More())
+	page, err := pager.NextPage(context.Background())
+	require.NoError(t, err)
+	require.Len(t, page.Value, 2)
+	require.Equal(t, azkeys.ID("https://vault.vault.azure.net/keys/key-0"), *page.Value[0].KID)
+
+	key, err := client.GetKey(context.Background(), "key-0", "", nil)
+	require.NoError(t, err)
+	require.Equal(t, azkeys.KeyTypeRSA, *key.Key.Kty)
+	require.Equal(t, []byte{1, 2, 3}, key.Key.N)
 }
