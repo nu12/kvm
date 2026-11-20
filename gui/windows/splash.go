@@ -44,12 +44,12 @@ func NewSplash(parent *RootWindow) *SplashWindow {
 func (splash *SplashWindow) LoadAsync(table *widget.Table, counter *widget.Label) {
 	go func() {
 		vaults, err := services.GetKeyVaults()
-		notifications.OnErrorCloseApplication(err, splash.parent.this)
-		splash.parent.Vaults = vaults
-		splash.parent.VisibleVaults = append([]*armkeyvault.Vault(nil), vaults...)
-		table.Refresh()
-		counter.SetText(fmt.Sprintf("Showing %d out of %d key vaults.", len(splash.parent.VisibleVaults), len(splash.parent.Vaults)))
 		fyne.Do(func() {
+			notifications.OnErrorCloseApplication(err, splash.parent.this)
+			splash.parent.Vaults = vaults
+			splash.parent.VisibleVaults = append([]*armkeyvault.Vault(nil), vaults...)
+			table.Refresh()
+			counter.SetText(fmt.Sprintf("Showing %d out of %d key vaults.", len(splash.parent.VisibleVaults), len(splash.parent.Vaults)))
 			splash.this.Close() // ← Hide, not Close (see note below)
 			fyne.CurrentApp().Settings().SetTheme(theme.DefaultTheme())
 			splash.parent.this.Show() // ← Show, NOT ShowAndRun
